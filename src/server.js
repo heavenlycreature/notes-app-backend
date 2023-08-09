@@ -17,8 +17,14 @@ const AuthenticationsService = require('./services/postgre/authenticationService
 const TokenManager = require('./tokenize/tokenManager');
 const AuthenticationsValidator = require('./validator/authentications');
 
+// collaborations
+const collaborations = require('./api/collaboration');
+const CollaborationsService = require('./services/postgre/collaborationService');
+const CollaborationsValidator = require('./validator/collaborations');
+
 const init = async () => {
-  const notesService = new NotesService();
+  const collaborationsService = new CollaborationsService();
+  const notesService = new NotesService(collaborationsService);
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
   const server = Hapi.server({
@@ -34,7 +40,7 @@ const init = async () => {
     {
       plugin: Jwt,
     },
-  ])
+  ]);
   // mendefinisikan strategy autentikasi jwt
   server.auth.strategy('notesapp_jwt', 'jwt', {
     keys: process.env.ACCESS_TOKEN_KEY,
@@ -74,6 +80,14 @@ const init = async () => {
         usersService,
         tokenManager: TokenManager,
         validator: AuthenticationsValidator,
+      },
+    },
+    {
+      plugin: collaborations,
+      options: {
+        collaborationsService,
+        notesService,
+        validator: CollaborationsValidator,
       },
     },
   ]);
